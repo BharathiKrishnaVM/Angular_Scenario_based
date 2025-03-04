@@ -1,6 +1,7 @@
 # Angular_Scenario_based
 # Question1:
 ***I have a reactive forms of three fields accept the user to enter any of the two fields in angular***
+
 To create a reactive form in Angular that requires the user to fill in any two out of three fields, you can use custom validation. This custom validator will check if at least two out of the three fields are filled in.
 
 Step-by-Step Implementation
@@ -110,6 +111,7 @@ The form is submitted using the (ngSubmit) event, which calls the onSubmit metho
 
 # Question2
 ***now i have three fields after entering the value in email show address custom form and if the value is empty remove the newly added form***
+
 To achieve this functionality, you can use Angular's reactive forms along with conditional rendering in the template. Specifically, you can listen for changes in the email field and dynamically add or remove the address form group based on whether the email field has a value.
 
 Step-by-Step Implementation
@@ -248,6 +250,7 @@ The address form group is conditionally rendered using *ngIf based on whether th
 
 # Question3
 ***I have a rating component with the input of rating and a form in another component called rating form control which needs the value from rating component***
+
 To achieve this, you can create a custom form control component for the rating input and integrate it with a reactive form in another component. This involves creating a custom form control component that implements the ControlValueAccessor interface, which allows it to work seamlessly with Angular's reactive forms.
 
 Step-by-Step Implementation
@@ -369,7 +372,9 @@ The form is submitted using the (ngSubmit) event, which calls the onSubmit metho
 
 # Question4
 ***Interfaces in Typescript***
+
 ***I have a interface with name, mail, age I want to use that interface along with two mandatory properties which are empId, empDesgination***
+
 To achieve this, you can define an interface for the common properties (name, mail, age) and then extend this interface to include the mandatory properties (empId, empDesignation). This approach allows you to create a more modular and reusable type definition.
 
 Step-by-Step Implementation
@@ -500,4 +505,211 @@ export interface Employee extends Pick<EmployeeBase, 'name' | 'age' | 'place' | 
   empDesignation: string;
 }
 ```
+# Question 5:
+***How to handle memory Leaks***
+
+Memory Leaks in Angular
+Memory leaks in Angular applications can occur due to various reasons, such as improper handling of subscriptions, event listeners, and DOM manipulations. These leaks can lead to increased memory usage over time, causing the application to slow down or crash. Understanding how to detect and prevent memory leaks is crucial for maintaining the performance and stability of your Angular applications.
+
+Common Causes of Memory Leaks in Angular
+Unsubscribed Observables:
+
+```typescript
+import { Component, OnInit } from '@angular/core';
+import { interval } from 'rxjs';
+
+@Component({
+  selector: 'app-leaky-component',
+  template: '<p>Leaky Component</p>'
+})
+export class LeakyComponent implements OnInit {
+  ngOnInit() {
+    interval(1000).subscribe(val => console.log(val));
+  }
+}
+```
+
+Failing to unsubscribe from observables can cause memory leaks, as the subscriptions remain active even after the component is destroyed.
+Example:
+Event Listeners:
+
+```typescript
+import { Component, OnInit } from '@angular/core';
+
+@Component({
+  selector: 'app-leaky-component',
+  template: '<button id="leaky-button">Click me</button>'
+})
+export class LeakyComponent implements OnInit {
+  ngOnInit() {
+    const button = document.getElementById('leaky-button');
+    button.addEventListener('click', () => console.log('Button clicked'));
+  }
+}
+```
+
+Adding event listeners without removing them can cause memory leaks, as the listeners retain references to the DOM elements.
+Example:
+Detached DOM Nodes:
+```typescript
+import { Component, OnInit } from '@angular/core';
+
+@Component({
+  selector: 'app-leaky-component',
+  template: '<div id="leaky-div">Leaky Div</div>'
+})
+export class LeakyComponent implements OnInit {
+  ngOnInit() {
+    const div = document.getElementById('leaky-div');
+    document.body.removeChild(div);
+    // div is still referenced in JavaScript
+  }
+}
+```
+
+Detached DOM nodes are elements that have been removed from the DOM tree but are still referenced in JavaScript.
+Example:
+Timers and Intervals:
+
+```typescript
+import { Component, OnInit } from '@angular/core';
+
+@Component({
+  selector: 'app-leaky-component',
+  template: '<p>Leaky Component</p>'
+})
+export class LeakyComponent implements OnInit {
+  ngOnInit() {
+    setInterval(() => console.log('Interval running'), 1000);
+  }
+}
+```
+
+Timers and intervals can cause memory leaks if they are not cleared when no longer needed.
+Example:
+Detecting Memory Leaks in Angular
+Browser Developer Tools:
+
+  1. Modern browsers provide developer tools to help detect and analyze memory leaks.
+  2. In Chrome, you can use the Memory tab to take heap snapshots and analyze memory usage.
+     
+Heap Snapshots:
+
+   1. Heap snapshots capture the state of memory at a specific point in time.
+   2. By comparing heap snapshots taken at different times, you can identify objects that are not being garbage collected.
+   
+Performance Monitoring:
+
+  1. Monitoring the performance of your application can help identify memory leaks.
+  2. Look for increasing memory usage over time, especially in long-running applications.
+
+Preventing Memory Leaks in Angular
+Unsubscribe from Observables:
+
+  1. Always unsubscribe from observables to prevent memory leaks.
+  2. Use the takeUntil operator with an ngOnDestroy hook to manage subscriptions.
+Example:
+```typescript
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { interval, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+
+@Component({
+  selector: 'app-safe-component',
+  template: '<p>Safe Component</p>'
+})
+export class SafeComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+
+  ngOnInit() {
+    interval(1000).pipe(takeUntil(this.destroy$)).subscribe(val => console.log(val));
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+}
+```
+
+Remove Event Listeners:
+
+  1. Always remove event listeners when they are no longer needed.
+Example:
+```typescript
+import { Component, OnInit, OnDestroy } from '@angular/core';
+
+@Component({
+  selector: 'app-safe-component',
+  template: '<button id="safe-button">Click me</button>'
+})
+export class SafeComponent implements OnInit, OnDestroy {
+  private button: HTMLElement;
+
+  ngOnInit() {
+    this.button = document.getElementById('safe-button');
+    this.button.addEventListener('click', this.handleClick);
+  }
+
+  ngOnDestroy() {
+    this.button.removeEventListener('click', this.handleClick);
+  }
+
+  handleClick() {
+    console.log('Button clicked');
+  }
+}
+```
+Manage DOM Nodes:
+
+  1. Ensure that references to detached DOM nodes are cleared.
+Example:
+
+```typescript
+import { Component, OnInit, OnDestroy } from '@angular/core';
+
+@Component({
+  selector: 'app-safe-component',
+  template: '<div id="safe-div">Safe Div</div>'
+})
+export class SafeComponent implements OnInit, OnDestroy {
+  private div: HTMLElement;
+
+  ngOnInit() {
+    this.div = document.getElementById('safe-div');
+    document.body.removeChild(this.div);
+  }
+
+  ngOnDestroy() {
+    this.div = null; // Clear the reference
+  }
+}
+```
+Clear Timers and Intervals:
+
+  1. Always clear timers and intervals when they are no longer needed.
+Example:
+```typescript
+import { Component, OnInit, OnDestroy } from '@angular/core';
+
+@Component({
+  selector: 'app-safe-component',
+  template: '<p>Safe Component</p>'
+})
+export class SafeComponent implements OnInit, OnDestroy {
+  private intervalId: number;
+
+  ngOnInit() {
+    this.intervalId = setInterval(() => console.log('Interval running'), 1000);
+  }
+
+  ngOnDestroy() {
+    clearInterval(this.intervalId);
+  }
+}
+```
+Summary
+Memory leaks in Angular applications can occur due to various reasons, such as unsubscribed observables, event listeners, detached DOM nodes, and timers/intervals. Detecting memory leaks can be done using browser developer tools, heap snapshots, and performance monitoring. Preventing memory leaks involves using best practices such as unsubscribing from observables, removing event listeners, managing DOM nodes, and clearing timers and intervals. Understanding and addressing memory leaks is essential for maintaining the performance and stability of your Angular applications.
+
+
 
